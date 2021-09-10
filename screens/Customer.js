@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { TextInput, Keyboard } from "react-native";
-import { View, Text, StyleSheet } from "react-native";
+import { TextInput, Keyboard, Alert } from "react-native";
+import { View, Text, StyleSheet,Image } from "react-native";
 import { useStateValue } from "../context/StateProvider";
 import { EvilIcons } from "@expo/vector-icons";
 import {
@@ -21,15 +21,20 @@ const Customer = () => {
   const [updateData,setUpdateData] = useState({});
   var no = 1;
   const getCustomers = async() => {
-    const customers = await db.collection('customers').onSnapshot
-   (querySnapshot => {
-      const item = [];
-      const id = []
-      querySnapshot.forEach(doc => {
-        item.push({...doc.data(), id: doc.id})
-      });
-      setCustomer(item)
-    });
+    try{
+      const customers = await db.collection('customers').onSnapshot
+      (querySnapshot => {
+         const item = [];
+         const id = []
+         querySnapshot.forEach(doc => {
+           item.push({...doc.data(), id: doc.id})
+         });
+         setCustomer(item)
+       });
+    }catch(e){
+      Alert.alert(e)
+    }
+   
     }
 
     React.useEffect(()=>{
@@ -70,10 +75,13 @@ const Customer = () => {
         return(
           <TouchableWithoutFeedback key={index} onPress={()=> {setModalVisible(true),setUpdateData(item)}}>
           <View style={styles.cart} key={index}>
-            <Text style={{width: "10%",textAlign:"center"}}>{item.id}</Text>
-            <Text style={{width: "30%",textAlign:"center"}}>{item.name}</Text>
-            <Text style={{width: "30%",textAlign:"center"}}>{item.tel}</Text>
-            <Text style={{width: "30%",textAlign:"center"}}>{item.address}</Text>
+            <Text style={{width: "10%",textAlign:"center"}}>{no++}</Text>
+            <View style={{width: "30%"}}>
+              <Text>{item.name}</Text>
+              <Image source={{ uri: item.img }} style={{ width: 20, height: 20 }} />
+            </View>
+            <Text style={{width: "30%"}}>{item.tel}</Text>
+            <Text style={{width: "30%"}}>{item.address}</Text>
           </View>
           </TouchableWithoutFeedback>
         )

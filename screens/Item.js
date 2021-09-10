@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
-import { TextInput, Keyboard } from "react-native";
-import { View, Text, StyleSheet } from "react-native";
+import { TextInput, Keyboard, Alert } from "react-native";
+import { View, Text, StyleSheet, Image } from "react-native";
 import { useStateValue } from "../context/StateProvider";
 import { EvilIcons } from "@expo/vector-icons";
 import {
@@ -11,13 +11,34 @@ import {
 import UpdateItem from "../components/model/item/updateItem";
 import AddItem from "../components/model/item/addItem";
 import { ScrollView } from "react-native";
+import {db} from "../api/firebase"
 const Item = () => {
   const [{ item }, dispatch] = useStateValue();
   const [modalVisible, setModalVisible] = useState(false);
-  const [modalAddItem,setModalAddItem] = useState(false)
+  const [modalAddItem,setModalAddItem] = useState(false);
+  const [products,setProducts] = useState([])
   const [id,setId] = useState()
+  const [updateData,setUpdateData] = useState({});
   var no = 1;
-  // console.log(item);
+  const getProducts = async() => {
+    try{
+      const pro = await db.collection('products').onSnapshot
+      (querySnapshot => {
+         const item = [];
+         const id = []
+         querySnapshot.forEach(doc => {
+           item.push({...doc.data(), id: doc.id})
+         });
+         setProducts(item)
+       });
+    }catch(e){
+      Alert.alert(e)
+    }
+    }
+
+    React.useEffect(()=>{
+      getProducts()
+    },[])
   return (
     <View style={styles.container}>
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -43,15 +64,18 @@ const Item = () => {
       </View>
       <ScrollView>
       {
-       item?.map((item)=>{
+       products?.map((item)=>{
         return(
-          <TouchableWithoutFeedback key={item.id} onPress={()=> {setModalVisible(true),setId(item.id)}}>
+          <TouchableWithoutFeedback key={item.id} onPress={()=> {setModalVisible(true),setUpdateData(item)}}>
           <View style={styles.cart} key={item.id}>
             <Text style={{width: "10%",textAlign:"center"}}>{no++}</Text>
-            <Text style={{width: "30%",textAlign:"center"}}>{item.item}</Text>
-            <Text style={{width: "20%",textAlign:"center"}}>{item.Um}</Text>
-            <Text style={{width: "20%",textAlign:"center"}}>{item.price}$</Text>
-            <Text style={{width: "20%",textAlign:"center"}}>{item.inStock}</Text>
+            <View style={{width: "30%"}}>
+              <Text>{item.name}</Text>
+              <Image source={{ uri: item.img }} style={{ width: 20, height: 20 }} />
+            </View>
+            <Text style={{width: "20%"}}>{item.um}</Text>
+            <Text style={{width: "20%"}}>{item.price}$</Text>
+            <Text style={{width: "20%"}}>{item.inStock}</Text>
 
           </View>
           </TouchableWithoutFeedback>
@@ -63,7 +87,7 @@ const Item = () => {
         <AddItem modalAddItem={modalAddItem} setModalAddItem={setModalAddItem} />
       </View>
       <View style={{flex: 1}}>
-        <UpdateItem modalVisible={modalVisible} setModalVisible={setModalVisible} id={id}/>
+        <UpdateItem modalVisible={modalVisible} setModalVisible={setModalVisible} updateData={updateData}/>
       </View>
     </View>
   );

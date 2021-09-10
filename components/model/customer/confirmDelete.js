@@ -19,7 +19,7 @@ const ConfirmDelete = ({openConfirmDelete,setOpenConfirmDelete, updateData,setMo
 const deleteCustomer = async () => {
   const deteteFood  = await db.collection("customers").doc(updateData.id).delete()
   .then(() => {
-      Alert.alert("Document successfully deleted!");
+      // Alert.alert("Document successfully deleted!");
   }).catch((error) => {
       console.error("Error removing document: ", error);
   });

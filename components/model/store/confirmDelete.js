@@ -5,16 +5,17 @@ import { View, Text, Modal } from 'react-native'
 import { useStateValue } from '../../../context/StateProvider'
 import {actionTypes} from "../../../context/Reducer"
 import { setLocalstorage } from "../../../function/Function";
-const ConfirmDeleteStore = ({openConfirmDelete,setOpenConfirmDelete, id,modalUpdateStore,setModalUpdateStore}) => {
+import {db} from "../../../api/firebase"
+const ConfirmDeleteStore = ({openConfirmDelete,setOpenConfirmDelete, dataUpdate,modalUpdateStore,setModalUpdateStore}) => {
  const [{store},dispatch] = useStateValue();
- const handleDeleteStore = () =>{
-  const newArr = store.filter((item)=> item.id !== id);
-  dispatch({
-   type: actionTypes.STORE,
-   store: newArr,
-  })
-  setLocalstorage("store",newArr);
- }
+ const deleteStore = async () => {
+  const detete  = await db.collection("stores").doc(dataUpdate.id).delete()
+  .then(() => {
+      // Alert.alert("Document successfully deleted!");
+  }).catch((error) => {
+      console.error("Error removing document: ", error);
+  });
+}
  return (
   <View style={styles.container}>
     <Modal
@@ -25,7 +26,7 @@ const ConfirmDeleteStore = ({openConfirmDelete,setOpenConfirmDelete, id,modalUpd
        <View style={styles.container}>
         <Text style={styles.question }>Do you want to delete..!</Text> 
         <View style={styles.containBtn}>
-         <TouchableWithoutFeedback onPress={()=>{handleDeleteStore(),setOpenConfirmDelete(!openConfirmDelete),setModalUpdateStore(!modalUpdateStore)}}>
+         <TouchableWithoutFeedback onPress={()=>{deleteStore(),setOpenConfirmDelete(!openConfirmDelete),setModalUpdateStore(!modalUpdateStore)}}>
           <View style={styles.btn}>
            <Text>Yes</Text>
           </View>

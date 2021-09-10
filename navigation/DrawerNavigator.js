@@ -24,6 +24,7 @@ import { actionTypes } from "../context/Reducer";
 import { customerData } from "../data/Data";
 import { useStateValue } from "../context/StateProvider";
 import { setLocalstorage } from "../function/Function";
+import * as ImagePicker from 'expo-image-picker';
 const Drawer = createDrawerNavigator();
 const DrawerNavigator = () => {
   const [{ customer, item }, dispatch] = useStateValue();
@@ -59,6 +60,16 @@ const DrawerNavigator = () => {
   };
   React.useEffect(() => {
     getLocalStorage();
+  }, []);
+  React.useEffect(() => {
+    (async () => {
+      if (Platform.OS !== 'web') {
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== 'granted') {
+          alert('Sorry, we need camera roll permissions to make this work!');
+        }
+      }
+    })();
   }, []);
   return (
     <Drawer.Navigator initialRouteName="Home" drawerStyle={{ width: "60%" }}>

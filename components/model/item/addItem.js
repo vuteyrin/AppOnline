@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import { SafeAreaView } from "react-native";
+import { Keyboard, SafeAreaView } from "react-native";
 import { TextInput } from "react-native";
 import { Dimensions } from "react-native";
-import { Alert, Modal, StyleSheet, Text, Pressable, View ,TouchableWithoutFeedback } from "react-native";
+import { Alert, Modal, StyleSheet, Text, Image, View ,TouchableWithoutFeedback } from "react-native";
 import { AntDesign } from '@expo/vector-icons';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { Feather } from '@expo/vector-icons';
@@ -11,44 +11,57 @@ import { Ionicons } from '@expo/vector-icons';
 import {useStateValue} from "../../../context/StateProvider"
 import { setLocalstorage } from "../../../function/Function";
 import {actionTypes} from "../../../context/Reducer"
+import * as ImagePicker from 'expo-image-picker';
+import {db} from "../../../api/firebase"
 const AddItem = ({modalAddItem,setModalAddItem}) => {
-  const [{item},dispatch] = useStateValue();
+  // const [{item},dispatch] = useStateValue();
   const [items,setItem] = useState();
   const [um,setUm] = useState();
   const [price,setPrice] = useState();
   const [inStock,setInStock] = useState();
-
-  const handleAddItem =()=>{
-    var newArray = [];
-      newArray = [
-        ...item,
-        {
-          id: item.length +1,
-          item: items,
-          Um: um,
-          price: price,
-          inStock: inStock,
-        },
-      ];
-    // }
-    setLocalstorage("item",newArray);
-    dispatch({
-      type: actionTypes.ITEM,
-      item: newArray
+  const [image, setImage] = useState(null);
+  const handleAddItem = async () => {
+    const addCustomer = await db.collection('products').add({
+      name: items,
+      price: price,
+      um: um,
+      inStock: inStock,
+      img: image
     })
-    setItem("");
-    setUm("");
-    setPrice("");
-    setInStock("");
+    .then((querySnapshot) => {
+      // Alert.alert("successful add new customers !!!!")
+      setItem("");
+      setUm("");
+      setPrice("");
+      setInStock("");
+      setImage(null)
+    })
+    .catch((error) => {
+        console.error("Error adding document: ", error);
+    });
   }
+  const pickImage = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.All,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+    console.log(result);
+    if (!result.cancelled) {
+      setImage(result.uri);
+    }
+  };
+
+
   return (
-    <SafeAreaView style={styles.centeredView}>
+
       <Modal
         animationType="slide"
         transparent={true}
         visible={modalAddItem}
       >
-        <TouchableWithoutFeedback style={styles.centeredView} >
+        <TouchableWithoutFeedback style={styles.centeredView} onPress={()=> Keyboard.dismiss()}>
           <View style={styles.modalView}>
           <TouchableWithoutFeedback
               onPress={()=> setModalAddItem(!modalAddItem)}
@@ -76,6 +89,12 @@ const AddItem = ({modalAddItem,setModalAddItem}) => {
               <FontAwesome5 name="store" size={18} color="black" />
                 <TextInput value={inStock}  onChangeText={(e) => setInStock(e)} style={{width:"100%",marginLeft:10}} placeholder="inStock.."/>
               </View>
+              <View style={styles.input}>
+              <TouchableWithoutFeedback onPress={pickImage}>
+                <MaterialIcons name="add-photo-alternate" size={25} color="black" />
+              </TouchableWithoutFeedback>
+              </View>
+              {image && <Image source={{ uri: image }} style={{ width: 200, height: 200 }} />}
               <View style={styles.btn}>
               <TouchableWithoutFeedback  onPress={() => {handleAddItem(),setModalAddItem(!modalAddItem)}}>
                 <Text style={styles.btnText}>save</Text>
@@ -85,7 +104,7 @@ const AddItem = ({modalAddItem,setModalAddItem}) => {
           </View>
         </TouchableWithoutFeedback>
       </Modal>
-    </SafeAreaView>
+
   );
 };
 const width = Dimensions.get("window").width;

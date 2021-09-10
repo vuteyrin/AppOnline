@@ -1,18 +1,40 @@
 import React,{useState} from "react";
 import { StyleSheet } from "react-native";
-import { View, Text, TouchableWithoutFeedback } from "react-native";
+import { View, Text,Image, TouchableWithoutFeedback } from "react-native";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { Entypo } from "@expo/vector-icons";
 import { useStateValue } from "../../context/StateProvider";
 import { map } from "async";
 import AddStore from "../model/store/addStore";
 import UpdateStore from "../model/store/updateStore";
+import {db} from "../../api/firebase"
 const Store = () => {
-  const [{ store }, dispatch] = useStateValue();
+  // const [{ store }, dispatch] = useStateValue();
   const [modalAddStore, setModalAddStore] = React.useState(false);
   const [modalUpdateStore, setModalUpdateStore] = React.useState(false);
   const [id,setId] = useState()
+  const [store,setStore] = useState();
+  const [dataUpdate,setDataUpdate] = useState({})
   var num = 0;
+  const getStore = async() => {
+    try{
+      const pro = await db.collection('stores').onSnapshot
+      (querySnapshot => {
+         const item = [];
+         const id = []
+         querySnapshot.forEach(doc => {
+           item.push({...doc.data(), id: doc.id})
+         });
+         setStore(item)
+       });
+    }catch(e){
+      Alert.alert(e)
+    }
+    }
+
+    React.useEffect(()=>{
+      getStore()
+    },[])
   return (
     <View style={styles.container}> 
       <View style={styles.header}>
@@ -36,18 +58,23 @@ const Store = () => {
           </Text>
         </View>
         <View style={styles.th}>
-          <Text  style={styles.box}>id</Text>
+          <Text  style={{width: "10%"}}>id</Text>
           <Text  style={styles.box}>Store</Text>
           <Text  style={styles.box}>Address</Text>
+          <Text  style={styles.box}>Remark</Text>
         </View>
         {store?.map((item) => {
           num++
           return (
-            <TouchableWithoutFeedback key={item.id} onPress={()=>{setId(item.id), setModalUpdateStore(!modalUpdateStore)}}>
+            <TouchableWithoutFeedback key={item.id} onPress={()=>{setDataUpdate(item), setModalUpdateStore(!modalUpdateStore)}}>
               <View  style={styles.Store}>
-                <Text style={styles.box}>{num}</Text>
-                <Text  style={styles.box}>{item.title}</Text>
-                <Text  style={styles.box}>{item.Address}</Text>
+                <Text style={{width: "10%"}}>{num}</Text>
+                <View style={{width: "30%"}}>
+                  <Text>{item.name}</Text>
+                  <Image source={{ uri: item.img }} style={{ width: 20, height: 20 }} />
+                </View>
+                <Text  style={styles.box}>{item.address}</Text>
+                <Text  style={styles.box}>{item.remark}</Text>
                 {/* <Text>{item.remark}</Text> */}
               </View>
             </TouchableWithoutFeedback>
@@ -61,7 +88,7 @@ const Store = () => {
       <UpdateStore
       modalUpdateStore={modalUpdateStore}
       setModalUpdateStore={setModalUpdateStore}
-      id={id}
+      dataUpdate={dataUpdate}
       />
     </View>
   );
@@ -117,7 +144,7 @@ const styles = StyleSheet.create({
     // justifyContent: "space-between",
   },
   box: {
-    width: "33%"
+    width: "30%"
   }
 });
 export default Store;

@@ -7,7 +7,7 @@ import {
   Modal,
   StyleSheet,
   Text,
-  Pressable,
+  Image,
   View,
   TouchableWithoutFeedback,
 } from "react-native";
@@ -20,31 +20,46 @@ import { customerData } from "../../../data/Data";
 import { setLocalstorage } from "../../../function/Function";
 import { actionTypes } from "../../../context/Reducer";
 import { Ionicons } from "@expo/vector-icons";
+import {db} from "../../../api/firebase"
+import * as ImagePicker from 'expo-image-picker';
+import { Keyboard } from "react-native";
 const AddStore = ({ modalAddStore, setModalAddStore }) => {
   const [{ store }, dispatch] = useStateValue();
   const [title, setTitle] = useState();
   const [address, setAddress] = useState();
   const [remark, setRemark] = useState();
-  const handleAddStore = () => {
-    var newArray = [];
-    newArray = [
-      ...store,
-      {
-        id: Math.random(),
-        title: title,
-        Address: address,
-        remark: remark,
-      },
-    ];
-    // }
-    setLocalstorage("store", newArray);
-    dispatch({
-      type: actionTypes.STORE,
-      store: newArray,
+  const [image,setImage] = useState(null);
+  const handleAddStore = async () => {
+    const add = await db.collection('stores').add({
+      name: title,
+      address: address,
+      remark: remark,
+      img: image
+    })
+    .then((querySnapshot) => {
+      // Alert.alert("successful add new customers !!!!")
+      setTitle("");
+      setAddress("");
+      setRemark("");
+      setImage(null)
+    })
+    .catch((error) => {
+        console.error("Error adding document: ", error);
     });
-    setTitle("");
-    setAddress("");
-    setRemark("");
+  }
+
+
+  const pickImage = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.All,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+    console.log(result);
+    if (!result.cancelled) {
+      setImage(result.uri);
+    }
   };
   return (
     <SafeAreaView style={styles.centeredView}>
@@ -89,6 +104,12 @@ const AddStore = ({ modalAddStore, setModalAddStore }) => {
                   placeholder="remark.."
                 />
               </View>
+              <View style={styles.input}>
+              <TouchableWithoutFeedback onPress={pickImage}>
+                <MaterialIcons name="add-photo-alternate" size={25} color="black" />
+              </TouchableWithoutFeedback>
+              </View>
+             {image && <Image source={{ uri: image }} style={{ width: 200, height: 200 }} />}
               <View style={styles.btn}>
                 <TouchableWithoutFeedback
                   onPress={() => {

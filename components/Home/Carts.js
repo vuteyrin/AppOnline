@@ -2,11 +2,13 @@ import React from "react";
 import { View, Text, Image, StyleSheet, Dimensions } from "react-native";
 const screenWidth = Dimensions.get("window").width;
 const screenHeight = Dimensions.get("window").height;
-const Carts = ({ name, url, id }) => {
+const Carts = ({ name, url, id,price }) => {
+  // console.log(price)
   return (
     <View key={id} style={styles.container}>
       <Text>{name}</Text>
-      <Image style={styles.image} source={url} />
+      <Image style={styles.image} source={{ uri: url }} />
+      <Text style={styles.price}>{price}$</Text>
     </View>
   );
 };
@@ -33,9 +35,15 @@ const styles = StyleSheet.create({
   },
   image: {
     width: "100%",
-    height: "90%",
+    height: "80%",
     // resizeMode: "contain",
   },
+  price: {
+    backgroundColor: "green",
+    width: "100%",
+    padding: 5,
+    color: "#FFFF"
+  }
 });
 
 export default Carts;

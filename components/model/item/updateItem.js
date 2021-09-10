@@ -1,8 +1,8 @@
 import React, { useState,useEffect } from "react";
-import { SafeAreaView } from "react-native";
+import { Keyboard, SafeAreaView } from "react-native";
 import { TextInput } from "react-native";
 import { Dimensions } from "react-native";
-import { Alert, Modal, StyleSheet, Text, Pressable, View ,TouchableWithoutFeedback } from "react-native";
+import { Alert, Modal, StyleSheet, Text, Image, View ,TouchableWithoutFeedback } from "react-native";
 import { FontAwesome5 } from '@expo/vector-icons';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Ionicons } from '@expo/vector-icons';
@@ -12,59 +12,66 @@ import {useStateValue} from "../../../context/StateProvider"
 import { setLocalstorage } from "../../../function/Function";
 import {actionTypes} from "../../../context/Reducer"
 import ConfirmDeleteItem from "./confirmDeleteItem";
-  const UpdateItem = ({modalVisible,setModalVisible,id}) => {
+import {db} from "../../../api/firebase"
+import * as ImagePicker from 'expo-image-picker';
+
+  const UpdateItem = ({modalVisible,setModalVisible,updateData}) => {
   const [{item},dispatch] = useStateValue();
   const [items,setItem] = useState();
   const [um,setUm] = useState();
   const [price,setPrice] = useState();
   const [inStock,setInStock] = useState();
   const [openConfirmDelete,setOpenConfirmDelete] = useState(false);
-  const handleUpdateitem =()=>{
-    var newArray = [];
-    const index = item?.findIndex((index)=>index.id === id);
-    if (index !== -1) {
-      item[index] = {...item[index],item:items,Um:um,price: price,inStock:inStock };
-      newArray = [...item];
-     } 
-    setLocalstorage("item",newArray);
-    dispatch({
-      type: actionTypes.ITEM,
-      item: newArray
-    })
-    setItem("");
-    setUm("");
-    setPrice("");
-    setInStock("");
-  }
-  // const handleDeleteItem = () =>{
-  //  const newArr = item.filter((item)=> item.id !== id);
-  //  dispatch({
-  //   type: actionTypes.ITEM,
-  //   item: newArr,
-  //  })
-  //  setLocalstorage("item",newArr);
-  // }
-
+  const [image, setImage] = useState(null);
+ 
   useEffect(()=>{
-    const newArr =  item.filter((item) => item.id === id);
-    if(newArr.length !== 0){
-      setItem(newArr[0].item);
-      setUm(newArr[0].Um);
-      setPrice(newArr[0].price);
-      setInStock(newArr[0].inStock)
-    }
-
-    
+    setItem(updateData.name);
+    setPrice(updateData.price);
+    setUm(updateData.um);
+    setInStock(updateData.inStock)
+    setImage(updateData.img)
   },[modalVisible])
+  const handleUpdateProduct = async () => {
+    const updateitem  = await db.collection("products").doc(updateData.id).update(
+      {
+        name: items,
+        price: price,
+        um: um,
+        inStock: inStock,
+        img: image
+      }
+    )
+    .then(() => {
+        // Alert.alert("Document successfully update!");
+        setItem("");
+        setPrice("");
+        setUm("");
+        setInStock("");
+        setImage(null)
+    }).catch((error) => {
+        Alert.alert("Error updateing document: ", error);
+    });
+  }
+  const pickImage = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.All,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+    // console.log(result);
+    if (!result.cancelled) {
+      setImage(result.uri);
+    }
+  };
 
   return (
-    <SafeAreaView style={styles.centeredView}>
       <Modal
         animationType="slide"
         transparent={true}
         visible={modalVisible}
       >
-        <TouchableWithoutFeedback style={styles.centeredView} >
+        <TouchableWithoutFeedback style={styles.centeredView} onPress={()=> Keyboard.dismiss()} >
           <View style={styles.modalView}>
           <TouchableWithoutFeedback
              onPress={()=> setModalVisible(!modalVisible)}
@@ -85,18 +92,24 @@ import ConfirmDeleteItem from "./confirmDeleteItem";
               </View>
               <View style={styles.input}>
               <MaterialIcons name="category" size={20} color="black" />
-                <TextInput value={um} onChangeText={(e) => setUm(e)} style={{width:"100%",marginLeft:10}} placeholder="phone.."/>
+                <TextInput value={um} onChangeText={(e) => setUm(e)} style={{width:"100%",marginLeft:10}} placeholder="um.."/>
               </View>
               <View style={styles.input}>
               <Feather name="dollar-sign" size={20} color="black" />
-                <TextInput value={price} onChangeText={(e) => setPrice(e)} style={{width:"100%",marginLeft:5}} placeholder="address.."/>
+                <TextInput value={price} onChangeText={(e) => setPrice(e)} style={{width:"100%",marginLeft:5}} placeholder="price.."/>
               </View>
               <View style={styles.input}>
               <FontAwesome5 name="store" size={18} color="black" />
-                <TextInput value={inStock}  onChangeText={(e) => setInStock(e)} style={{width:"100%",marginLeft:10}} placeholder="remark.."/>
+                <TextInput value={inStock}  onChangeText={(e) => setInStock(e)} style={{width:"100%",marginLeft:10}} placeholder="inStock.."/>
               </View>
+              <View style={styles.input}>
+              <TouchableWithoutFeedback onPress={() =>pickImage()}>
+                <MaterialIcons name="add-photo-alternate" size={25} color="black" />
+              </TouchableWithoutFeedback>
+              </View>
+              {image && <Image source={{ uri: image }} style={{ width: 200, height: 200 }} />}
               <View style={styles.btn}>
-              <TouchableWithoutFeedback  onPress={() => {handleUpdateitem(),setModalVisible(!modalVisible)}}>
+              <TouchableWithoutFeedback  onPress={() => {handleUpdateProduct(),setModalVisible(!modalVisible)}}>
                 <Text style={styles.btnText}>Update</Text>
               </TouchableWithoutFeedback>
               </View>
@@ -104,14 +117,14 @@ import ConfirmDeleteItem from "./confirmDeleteItem";
             <ConfirmDeleteItem
             openConfirmDelete={openConfirmDelete}
             setOpenConfirmDelete={setOpenConfirmDelete}
-            id={id}
+            updateData={updateData}
             modalVisible={modalVisible}
             setModalVisible={setModalVisible}
           />
           </View>
         </TouchableWithoutFeedback>
       </Modal>
-    </SafeAreaView>
+ 
   );
 };
 const width = Dimensions.get("window").width;

@@ -2,7 +2,7 @@ import React, { useState,useEffect } from "react";
 import { SafeAreaView } from "react-native";
 import { TextInput } from "react-native";
 import { Dimensions } from "react-native";
-import { Alert, Modal, StyleSheet, Text, Pressable, View ,TouchableWithoutFeedback,Keyboard } from "react-native";
+import { Alert, Modal, StyleSheet, Text, Image, View ,TouchableWithoutFeedback,Keyboard } from "react-native";
 import { AntDesign } from '@expo/vector-icons';
 import { EvilIcons } from '@expo/vector-icons';
 import { Feather } from '@expo/vector-icons';
@@ -15,6 +15,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import ConfirmDelete from "./confirmDelete";
 import { Ionicons } from "@expo/vector-icons";
 import {db} from "../../../api/firebase"
+import * as ImagePicker from 'expo-image-picker';
   const UpdateCustomer = ({modalVisible,setModalVisible,updateData}) => {
   const [{customer},dispatch] = useStateValue();
   const [openConfirmDelete,setOpenConfirmDelete] = useState(false);
@@ -22,13 +23,14 @@ import {db} from "../../../api/firebase"
   const [phone,setPhone] = useState();
   const [address,setAddress] = useState();
   const [remark,setRemark] = useState();
- 
+  const [image, setImage] = useState(null);
  
   useEffect(()=>{
       setName(updateData.name);
       setPhone(updateData.tel);
       setAddress(updateData.address);
       setRemark(updateData.remark)
+      setImage(updateData.img)
   },[modalVisible])
 
   const handleUpdateCustomer = async () => {
@@ -38,10 +40,11 @@ import {db} from "../../../api/firebase"
         tel: phone,
         address: address,
         remark: remark,
+        img: image
       }
     )
     .then(() => {
-        Alert.alert("Document successfully update!");
+        // Alert.alert("Document successfully update!");
         setName("");
         setPhone("");
         setAddress("");
@@ -50,14 +53,26 @@ import {db} from "../../../api/firebase"
         Alert.alert("Error updateing document: ", error);
     });
   }
+  const pickImage = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.All,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+    console.log(result);
+    if (!result.cancelled) {
+      setImage(result.uri);
+    }
+  };
   return (
-    <SafeAreaView style={styles.centeredView}>
+
       <Modal
         animationType="slide"
         transparent={true}
         visible={modalVisible}
       >
-        <TouchableWithoutFeedback style={styles.centeredView}  >
+        <TouchableWithoutFeedback style={styles.centeredView} onPress={()=> Keyboard.dismiss()} >
           <View style={styles.modalView}>
           <TouchableWithoutFeedback onPress={()=> setModalVisible(!modalVisible)} >
               <View style={{ width: "100%", paddingLeft: 12 }}>
@@ -88,6 +103,12 @@ import {db} from "../../../api/firebase"
               <MaterialIcons name="menu-book" size={15} color="black" />
                 <TextInput value={remark}  onChangeText={(e) => setRemark(e)} style={{width:"100%",marginLeft:10}} placeholder="remark.."/>
               </View>
+              <View style={styles.input}>
+              <TouchableWithoutFeedback onPress={pickImage}>
+                <MaterialIcons name="add-photo-alternate" size={25} color="black" />
+              </TouchableWithoutFeedback>
+              </View>
+             {image && <Image source={{ uri: image }} style={{ width: 200, height: 200 }} />}
               <View style={styles.btn}>
               <TouchableWithoutFeedback  onPress={() => {handleUpdateCustomer(),setModalVisible(!modalVisible)}}>
                 <Text style={styles.btnText}>Update</Text>
@@ -99,7 +120,7 @@ import {db} from "../../../api/firebase"
           </View>
         </TouchableWithoutFeedback>
       </Modal>
-    </SafeAreaView>
+
   );
 };
 const width = Dimensions.get("window").width;

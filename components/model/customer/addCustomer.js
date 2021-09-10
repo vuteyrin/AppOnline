@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { SafeAreaView } from "react-native";
 import { TextInput } from "react-native";
 import { Dimensions } from "react-native";
-import { Alert, Modal, StyleSheet, Text, Pressable, View ,TouchableWithoutFeedback } from "react-native";
+import { Alert, Modal, StyleSheet,Image, Text, Button, View ,TouchableWithoutFeedback } from "react-native";
 import { AntDesign } from '@expo/vector-icons';
 import { EvilIcons } from '@expo/vector-icons';
 import { Feather } from '@expo/vector-icons';
@@ -12,6 +12,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { setLocalstorage } from "../../../function/Function";
 import {actionTypes} from "../../../context/Reducer"
 import {db} from "../../../api/firebase"
+import * as ImagePicker from 'expo-image-picker';
+import { Keyboard } from "react-native";
 // import { addCustomer } from "../../../function/Function";
 const AddCustomer = ({modalAddCustomer,setModalAddCustomer}) => {
   const [{customer},dispatch] = useStateValue();
@@ -19,15 +21,18 @@ const AddCustomer = ({modalAddCustomer,setModalAddCustomer}) => {
   const [phone,setPhone] = useState();
   const [address,setAddress] = useState();
   const [remark,setRemark] = useState();
+  const [image, setImage] = useState(null);
+
   const addCustomer = async () => {
     const addCustomer = await db.collection('customers').add({
       name: name,
       tel: phone,
       address: address,
       remark: remark,
+      img: image
     })
     .then((querySnapshot) => {
-      Alert.alert("successful add new customers !!!!")
+      // Alert.alert("successful add new customers !!!!")
       setName("");
       setPhone("");
       setAddress("");
@@ -36,17 +41,39 @@ const AddCustomer = ({modalAddCustomer,setModalAddCustomer}) => {
     .catch((error) => {
         console.error("Error adding document: ", error);
     });
-
   }
- 
+
+
+  const pickImage = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.All,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+    console.log(result);
+    if (!result.cancelled) {
+      setImage(result.uri);
+    }
+  };
+  React.useEffect(() => {
+    (async () => {
+      if (Platform.OS !== 'web') {
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== 'granted') {
+          alert('Sorry, we need camera roll permissions to make this work!');
+        }
+      }
+    })();
+  }, []);
   return (
-    <SafeAreaView style={styles.centeredView}>
+    // <TouchableWithoutFeedback style={styles.centeredView} onPress={Keyboard.dismiss()}>
       <Modal
         animationType="slide"
         transparent={true}
         visible={modalAddCustomer}
       >
-        <TouchableWithoutFeedback style={styles.centeredView} >
+        <TouchableWithoutFeedback style={styles.centeredView} onPress={() => Keyboard.dismiss()} >
           <View style={styles.modalView}>
           <TouchableWithoutFeedback
             onPress={()=> setModalAddCustomer(!modalAddCustomer)}
@@ -74,6 +101,12 @@ const AddCustomer = ({modalAddCustomer,setModalAddCustomer}) => {
               <MaterialIcons name="menu-book" size={15} color="black" />
                 <TextInput value={remark}  onChangeText={(e) => setRemark(e)} style={{width:"100%",marginLeft:10}} placeholder="remark.."/>
               </View>
+              <View style={styles.input}>
+              <TouchableWithoutFeedback onPress={pickImage}>
+                <MaterialIcons name="add-photo-alternate" size={25} color="black" />
+              </TouchableWithoutFeedback>
+              </View>
+             {image && <Image source={{ uri: image }} style={{ width: 200, height: 200 }} />}
               <View style={styles.btn}>
               <TouchableWithoutFeedback  onPress={() =>
                  {addCustomer(),setModalAddCustomer(!modalAddCustomer)}
@@ -85,7 +118,7 @@ const AddCustomer = ({modalAddCustomer,setModalAddCustomer}) => {
           </View>
         </TouchableWithoutFeedback>
       </Modal>
-    </SafeAreaView>
+    // </TouchableWithoutFeedback>
   );
 };
 const width = Dimensions.get("window").width;
@@ -103,7 +136,7 @@ const styles = StyleSheet.create({
   },
   modalView: {
     marginTop: 70,
-    backgroundColor: "white",
+    backgroundColor: "#FFFF",
     alignItems: "center",
     elevation: 5,
     width:"100%",

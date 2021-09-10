@@ -1,8 +1,8 @@
 import React, { useState,useEffect } from "react";
-import { SafeAreaView } from "react-native";
+import { Keyboard, SafeAreaView } from "react-native";
 import { TextInput } from "react-native";
 import { Dimensions } from "react-native";
-import { Alert, Modal, StyleSheet, Text, Pressable, View ,TouchableWithoutFeedback } from "react-native";
+import { Alert, Modal, StyleSheet, Text, Image, View ,TouchableWithoutFeedback } from "react-native";
 import { AntDesign } from '@expo/vector-icons';
 import { EvilIcons } from '@expo/vector-icons';
 import { Feather } from '@expo/vector-icons';
@@ -14,56 +14,58 @@ import {actionTypes} from "../../../context/Reducer"
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Ionicons } from "@expo/vector-icons";
 import ConfirmDeleteStore from "./confirmDelete";
-
-  const UpdateStore = ({modalUpdateStore,setModalUpdateStore,id}) => {
+import * as ImagePicker from 'expo-image-picker';
+import {db} from "../../../api/firebase"
+  const UpdateStore = ({modalUpdateStore,setModalUpdateStore,dataUpdate}) => {
   const [{store},dispatch] = useStateValue();
   const [name,setName] = useState();
-  const [phone,setPhone] = useState();
   const [address,setAddress] = useState();
-  const [remark,setRemark] = useState();
+  const [remark,setRemark] = useState()
   const [openConfirmDelete,setOpenConfirmDelete] = useState(false);
-  const handleUpdateStore =()=>{
-    var newArray = [];
-    const index = store?.findIndex((index)=>index.id === id);
-    if (index !== -1) {
-      store[index] = {...store[index],title: name,Address: address,remark: remark };
-      newArray = [...store];
-     } 
-    setLocalstorage("store",newArray);
-    dispatch({
-      type: actionTypes.STORE,
-      store: newArray
-    })
-    setName("");
-    setAddress("");
-    setRemark("");
-  }
-  // const handleDeleteItem = () =>{
-  //   const newArr = store.filter((item)=> item.id !== id);
-  //   dispatch({
-  //    type: actionTypes.STORE,
-  //    store: newArr,
-  //   })
-  //   setLocalstorage("customer",newArr);
-  //  }
+  const [image,setImage] = useState(null)
   useEffect(()=>{
-    const newArr =  store.filter((item) => item.id === id);
-    if(newArr.length !== 0){
-      setName(newArr[0].title);
-      setAddress(newArr[0].Address);
-      setRemark(newArr[0].remark)
-    }
-    // console.log(newArr)
-    
+    setName(dataUpdate.name);
+    setAddress(dataUpdate.address);
+    setRemark(dataUpdate.remark)
+    setImage(dataUpdate.img)
   },[modalUpdateStore])
+  const handleUpdateStore = async () => {
+    const update  = await db.collection("stores").doc(dataUpdate.id).update(
+      {
+        name: name,
+        address: address,
+        img: image,
+        remark: remark,
+      }
+    )
+    .then(() => {
+        // Alert.alert("Document successfully update!");
+        setName("");
+        setAddress("");
+        setImage(null)
+    }).catch((error) => {
+        Alert.alert("Error updateing document: ", error);
+    });
+  }
+  const pickImage = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.All,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+    // console.log(result);
+    if (!result.cancelled) {
+      setImage(result.uri);
+    }
+  };
   return (
-    <SafeAreaView style={styles.centeredView}>
       <Modal
         animationType="slide"
         transparent={true}
         visible={modalUpdateStore}
       >
-        <TouchableWithoutFeedback style={styles.centeredView} >
+        <TouchableWithoutFeedback style={styles.centeredView} onPress={()=> Keyboard.dismiss()} >
           <View style={styles.modalView}>
           <TouchableWithoutFeedback onPress={()=> setModalUpdateStore(!modalUpdateStore)} >
               <View style={{ width: "100%", paddingLeft: 12 }}>
@@ -89,6 +91,12 @@ import ConfirmDeleteStore from "./confirmDelete";
               <MaterialIcons name="menu-book" size={15} color="black" />
                 <TextInput value={remark}  onChangeText={(e) => setRemark(e)} style={{width:"100%",marginLeft:10}} placeholder="remark.."/>
               </View>
+              <View style={styles.input}>
+              <TouchableWithoutFeedback onPress={() =>pickImage()}>
+                <MaterialIcons name="add-photo-alternate" size={25} color="black" />
+              </TouchableWithoutFeedback>
+              </View> 
+              {image && <Image source={{ uri: image }} style={{ width: 200, height: 200 }} />} 
               <View style={styles.btn}>
               <TouchableWithoutFeedback  onPress={() => {handleUpdateStore(),setModalUpdateStore(!modalUpdateStore)}}>
                 <Text style={styles.btnText}>Update</Text>
@@ -98,14 +106,14 @@ import ConfirmDeleteStore from "./confirmDelete";
             <ConfirmDeleteStore
             openConfirmDelete={openConfirmDelete}
             setOpenConfirmDelete={setOpenConfirmDelete}
-            id={id}
+            dataUpdate={dataUpdate}
             modalUpdateStore={modalUpdateStore}
             setModalUpdateStore={setModalUpdateStore}
           />
           </View>
         </TouchableWithoutFeedback>
       </Modal>
-    </SafeAreaView>
+
   );
 };
 const width = Dimensions.get("window").width;
