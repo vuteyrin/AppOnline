@@ -16,12 +16,13 @@ import Payment from "../screens/Payment";
 import Item from "../screens/Item";
 import Store from "../components/store/Store";
 import PayMethod from "../components/paymentMethod/PayMethod";
+import Menu from "../screens/Menu";
 
 const screenWidth = Dimensions.get("window").width;
 const screenHeight = Dimensions.get("window").height;
 const screenOptionStyle = {
   headerStyle: {
-    backgroundColor: "orange",
+    backgroundColor: "#FF8C00",
     // width: screenWidth,
   },
   headerTintColor: "white",
@@ -32,8 +33,9 @@ const MainStackNavigator = () => {
   return (
     <Stack.Navigator screenOptions={screenOptionStyle}>
       <Stack.Screen
-        name="Home"
-        component={TopNavigator}
+        name="Menu"
+        // component={TopNavigator}
+        component={Menu}
         options={({ navigation, route }) => {
           return {
             headerTitle: () => <Header navigation={navigation} route={route} />,
@@ -41,6 +43,24 @@ const MainStackNavigator = () => {
         }}
         // options={{
         //   headerShown: false,
+        // }}
+      />
+         <Stack.Screen
+        name="Store"
+        component={Store}
+        // options={({ navigation, route }) => {
+        //   return {
+        //     headerTitle: () => <Header navigation={navigation} route={route} />,
+        //   };
+        // }}
+      />
+       <Stack.Screen
+        name="PaymentMethod"
+        component={PayMethod}
+        // options={({ navigation, route }) => {
+        //   return {
+        //     headerTitle: () => <Header navigation={navigation} route={route} />,
+        //   };
         // }}
       />
       
